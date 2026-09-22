@@ -4,10 +4,15 @@ mod state;
 
 fn main() {
     let remote_control = state::spawn_client();
-    remote_control.to_green();
-    remote_control.to_yellow();
-    remote_control.to_red();
-    remote_control.to_green();
+    let res = remote_control.to_green();
+    println!("{:?}", res);
 
-    sleep(Duration::from_secs(1));
+    let res = remote_control.to_yellow();
+    println!("{:?}", res);
+
+    let res = remote_control.to_red();
+    println!("{:?}", res);
+
+    let res = remote_control.to_green();
+    println!("{:?}", res);
 }
