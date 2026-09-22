@@ -1,3 +1,5 @@
+use std::{thread::sleep, time::Duration};
+
 mod state;
 
 fn main() {
@@ -6,4 +8,6 @@ fn main() {
     remote_control.to_yellow();
     remote_control.to_red();
     remote_control.to_green();
+
+    sleep(Duration::from_secs(1));
 }
