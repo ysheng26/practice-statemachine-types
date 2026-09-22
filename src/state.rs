@@ -6,11 +6,11 @@
 use std::sync::mpsc;
 
 #[derive(Debug)]
-pub struct Green;
+struct Green;
 #[derive(Debug)]
-pub struct Yellow;
+struct Yellow;
 #[derive(Debug)]
-pub struct Red;
+struct Red;
 
 impl Red {
     pub fn new() -> Self {
