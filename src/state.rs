@@ -102,15 +102,15 @@ pub fn spawn_client() -> TrafficLightRemote {
             current_state = Some(match (state, cmd) {
                 //
                 (TrafficLight::Green(green), Command::ToYellow(reply_channel)) => {
-                    reply_channel.send(Ok(()));
+                    let _ = reply_channel.send(Ok(()));
                     TrafficLight::Yellow(green.to_yellow())
                 }
                 (TrafficLight::Yellow(yellow), Command::ToRed(reply_channel)) => {
-                    reply_channel.send(Ok(()));
+                    let _ = reply_channel.send(Ok(()));
                     TrafficLight::Red(yellow.to_red())
                 }
                 (TrafficLight::Red(red), Command::ToGreen(reply_channel)) => {
-                    reply_channel.send(Ok(()));
+                    let _ = reply_channel.send(Ok(()));
                     TrafficLight::Green(red.to_green())
                 }
                 (
