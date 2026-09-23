@@ -3,8 +3,6 @@
 // 3. Define the control pannel
 // 4. spawn the control pannel
 
-use std::sync::mpsc;
-
 #[derive(Debug)]
 struct Green;
 #[derive(Debug)]
@@ -47,39 +45,39 @@ enum TrafficLight {
 
 #[derive(Debug)]
 enum Command {
-    ToGreen(mpsc::Sender<Result<(), String>>),
-    ToYellow(mpsc::Sender<Result<(), String>>),
-    ToRed(mpsc::Sender<Result<(), String>>),
+    ToGreen(tokio::sync::oneshot::Sender<Result<(), String>>),
+    ToYellow(tokio::sync::oneshot::Sender<Result<(), String>>),
+    ToRed(tokio::sync::oneshot::Sender<Result<(), String>>),
 }
 
 #[derive(Clone)]
 pub struct TrafficLightRemote {
-    sender: mpsc::Sender<Command>,
+    sender: tokio::sync::mpsc::Sender<Command>,
 }
 
 impl TrafficLightRemote {
-    pub fn to_green(&self) -> Result<(), String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender.send(Command::ToGreen(tx)).unwrap();
-        match rx.recv() {
+    pub async fn to_green(&self) -> Result<(), String> {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        self.sender.send(Command::ToGreen(tx)).await.unwrap();
+        match rx.await {
             Ok(inner_result) => inner_result,
             Err(e) => Err(e.to_string()),
         }
     }
 
-    pub fn to_yellow(&self) -> Result<(), String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender.send(Command::ToYellow(tx)).unwrap();
-        match rx.recv() {
+    pub async fn to_yellow(&self) -> Result<(), String> {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        self.sender.send(Command::ToYellow(tx)).await.unwrap();
+        match rx.await {
             Ok(inner_result) => inner_result,
             Err(e) => Err(e.to_string()),
         }
     }
 
-    pub fn to_red(&self) -> Result<(), String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender.send(Command::ToRed(tx)).unwrap();
-        match rx.recv() {
+    pub async fn to_red(&self) -> Result<(), String> {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        self.sender.send(Command::ToRed(tx)).await.unwrap();
+        match rx.await {
             Ok(inner_result) => inner_result,
             Err(e) => Err(e.to_string()),
         }
@@ -87,13 +85,13 @@ impl TrafficLightRemote {
 }
 
 pub fn spawn_client() -> TrafficLightRemote {
-    let (tx, rx) = mpsc::channel();
+    let (tx, mut rx) = tokio::sync::mpsc::channel(32);
 
-    std::thread::spawn(move || {
+    tokio::spawn(async move {
         // initial state
         let mut current_state = Some(TrafficLight::Red(Red::new()));
 
-        while let Ok(cmd) = rx.recv() {
+        while let Some(cmd) = rx.recv().await {
             let Some(state) = current_state.take() else {
                 println!("fatal error, invalid state");
                 break;
