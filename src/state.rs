@@ -84,10 +84,10 @@ impl TrafficLightRemote {
     }
 }
 
-pub fn spawn_client() -> TrafficLightRemote {
+pub fn spawn_client() -> (TrafficLightRemote, tokio::task::JoinHandle<()>) {
     let (tx, mut rx) = tokio::sync::mpsc::channel(32);
 
-    tokio::spawn(async move {
+    let join_handle = tokio::spawn(async move {
         // initial state
         let mut current_state = Some(TrafficLight::Red(Red::new()));
 
@@ -125,8 +125,8 @@ pub fn spawn_client() -> TrafficLightRemote {
             let _ = reply_channel.send(result);
         }
 
-        println!("all threads done");
+        println!("worker done");
     });
 
-    TrafficLightRemote { sender: tx }
+    (TrafficLightRemote { sender: tx }, join_handle)
 }
