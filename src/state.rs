@@ -97,31 +97,32 @@ pub fn spawn_client() -> TrafficLightRemote {
                 break;
             };
 
-            current_state = Some(match (state, cmd) {
-                //
-                (TrafficLight::Green(green), Command::ToYellow(reply_channel)) => {
-                    let _ = reply_channel.send(Ok(()));
-                    TrafficLight::Yellow(green.to_yellow())
-                }
+            let (next_state, reply_channel, result) = match (state, cmd) {
+                (TrafficLight::Green(green), Command::ToYellow(reply_channel)) => (
+                    TrafficLight::Yellow(green.to_yellow()),
+                    reply_channel,
+                    Ok(()),
+                ),
                 (TrafficLight::Yellow(yellow), Command::ToRed(reply_channel)) => {
-                    let _ = reply_channel.send(Ok(()));
-                    TrafficLight::Red(yellow.to_red())
+                    (TrafficLight::Red(yellow.to_red()), reply_channel, Ok(()))
                 }
                 (TrafficLight::Red(red), Command::ToGreen(reply_channel)) => {
-                    let _ = reply_channel.send(Ok(()));
-                    TrafficLight::Green(red.to_green())
+                    (TrafficLight::Green(red.to_green()), reply_channel, Ok(()))
                 }
                 (
                     original_state,
                     Command::ToYellow(reply_channel)
                     | Command::ToRed(reply_channel)
                     | Command::ToGreen(reply_channel),
-                ) => {
-                    let _ =
-                        reply_channel.send(Err("invalid state command combination".to_string()));
-                    original_state
-                }
-            });
+                ) => (
+                    original_state,
+                    reply_channel,
+                    Err("invalid state command combination".to_string()),
+                ),
+            };
+
+            current_state = Some(next_state);
+            let _ = reply_channel.send(result);
         }
 
         println!("all threads done");
